@@ -22,4 +22,13 @@ Vagrant.configure("2") do |config|
       vb.name = "dotfiles-dev"
     end
   end
+
+  config.vm.define "dotfiles-win" do |win|
+    win.vm.box = "gusztavvargadr/windows-server"
+    win.vm.provider "virtualbox" do |vb|
+      vb.memory = "8192"
+      vb.cpus = 4
+      vb.name = "dotfiles-win"
+    end
+  end
 end
