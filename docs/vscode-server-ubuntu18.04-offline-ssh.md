@@ -164,14 +164,7 @@ Replace `<user>@<host>` with your SSH target (e.g., `vagrant` or `youruser@10.0.
 
 *All commands in this section run on the remote server.*
 
-### 7.1 Pre-clean stale artifacts (idempotent, before first connect)
-
-```bash
-# run on remote
-rm -f ~/.vscode-server/vscode-cli-*.tar.gz* ~/.vscode-server/vscode-server.tar.gz* 2>&1 | head
-```
-
-### 7.2 Unpack glibc sysroot to `~/opt/glibc-2.31`
+### 7.1 Unpack glibc sysroot to `~/opt/glibc-2.31`
 
 ```bash
 # run on remote
@@ -181,7 +174,7 @@ ar x ~/libc6_2.31.deb
 tar -xJf data.tar.xz -C ~/opt/glibc-2.31 --strip-components=1 2>&1 | head -n 20
 ```
 
-### 7.3 Install patchelf and wrapper utilities to `~/bin`
+### 7.2 Install patchelf and wrapper utilities to `~/bin`
 
 ```bash
 # run on remote
@@ -195,7 +188,7 @@ chmod +x ~/bin/mock-patchelf
 
 > `patchelf` 0.17.x segfaults with newer `node`. Ensure `>=0.18`.
 
-### 7.4 Install environment hook (top of `~/.bashrc`)
+### 7.3 Install environment hook (top of `~/.bashrc`)
 
 Typical stock `~/.bashrc` has `case $- in *i*) ;; *) return;; esac` — everything after `return` is skipped for Remote-SSH's non-interactive `bash -c`. Exports **must** be at line 1.
 
@@ -222,17 +215,18 @@ export VSCODE_SERVER_PATCHELF_PATH="$HOME/bin/mock-patchelf"
 
 Do not place this block after the `case $-` early-return; otherwise it will be ignored in non-interactive `Remote-SSH` sessions.
 
-### 7.5 Extract server and create CLI marker
+### 7.4 Extract server and CLI
 
 ```bash
 # run on remote
 COMMIT=YOUR_COMMIT_HERE   # same as Step 1
 mkdir -p ~/.vscode-server/cli/servers/Stable-${COMMIT}/server
 tar -xzf ~/vscode-server-linux-x64.tar.gz -C ~/.vscode-server/cli/servers/Stable-${COMMIT}/server --strip-components=1 --force-local
-cp ~/vscode_cli_alpine_x64_cli.tar.gz ~/.vscode-server/vscode-cli-${COMMIT}.tar.gz.done
+tar -xzf ~/vscode_cli_alpine_x64_cli.tar.gz -C ~/.vscode-server/
+mv ~/.vscode-server/code ~/.vscode-server/code-${COMMIT}
 ```
 
-### 7.6 Wrap `node` with `mock-patchelf` (required)
+### 7.5 Wrap `node` with `mock-patchelf` (required)
 
 ```bash
 # run on remote
@@ -240,7 +234,7 @@ COMMIT=YOUR_COMMIT_HERE
 ~/bin/mock-patchelf --set-interpreter ~/opt/glibc-2.31/lib/x86_64-linux-gnu/ld-2.31.so --set-rpath ~/opt/glibc-2.31/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu ~/.vscode-server/cli/servers/Stable-${COMMIT}/server/node
 ```
 
-### 7.7 Clean temporary files (optional)
+### 7.6 Clean temporary files (optional)
 
 ```bash
 # run on remote
